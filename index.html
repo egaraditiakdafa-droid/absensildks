@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Absensi LDKS SMPN 2 Kalibaru</title>
+    <style>
+        :root {
+            --primary: #1e3a8a;
+            --primary-dark: #1e1b4b;
+            --secondary: #3b82f6;
+            --bg-light: #f8fafc;
+            --card-bg: #ffffff;
+            --text-dark: #0f172a;
+            --text-muted: #64748b;
+            
+            --hadir-bg: #dcfce7;
+            --hadir-text: #15803d;
+            --izin-bg: #fef9c3;
+            --izin-text: #a16207;
+            --sakit-bg: #dbeafe;
+            --sakit-text: #1d4ed8;
+            --alpha-bg: #fee2e2;
+            --alpha-text: #b91c1c;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background-color: #f1f5f9;
+            color: var(--text-dark);
+            padding: 10px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: var(--card-bg);
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+            overflow: hidden;
+        }
+
+        header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            padding: 20px 16px;
+            text-align: center;
+        }
+
+        header h1 {
+            font-size: 1.25rem;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
+        }
+
+        header p {
+            font-size: 0.85rem;
+            opacity: 0.9;
+        }
+
+        .controls-card {
+            padding: 16px;
+            background: #ffffff;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .top-row {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 14px;
+        }
+
+        .date-box {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: var(--bg-light);
+            padding: 10px 12px;
+            border-radius: 10px;
+            border: 1px solid #cbd5e1;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .date-box select {
+            border: none;
+            background: transparent;
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--primary);
+            outline: none;
+            cursor: pointer;
+            text-align: right;
+            width: 60%;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 10px 14px;
+            border-radius: 10px;
+            border: 1px solid #cbd5e1;
+            font-size: 0.9rem;
+            outline: none;
+            background: var(--bg-light);
+            transition: all 0.2s;
+        }
+
+        .search-box input:focus {
+            background: #fff;
+            border-color: var(--secondary);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .stat-card {
+            padding: 8px 4px;
+            border-radius: 8px;
+            text-align: center;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .stat-card .count {
+            font-size: 1.25rem;
+            font-weight: 800;
+            margin-top: 2px;
+        }
+
+        .stat-hadir { background: var(--hadir-bg); color: var(--hadir-text); }
+        .stat-izin { background: var(--izin-bg); color: var(--izin-text); }
+        .stat-sakit { background: var(--sakit-bg); color: var(--sakit-text); }
+        .stat-alpha { background: var(--alpha-bg); color: var(--alpha-text); }
+
+        .quick-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        .btn-action {
+            flex: 1;
+            padding: 8px 10px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            border-radius: 8px;
+            border: 1px solid #cbd5e1;
+            background: var(--bg-light);
+            color: var(--text-dark);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-action:active {
+            background: #cbd5e1;
+        }
+
+        .table-responsive {
+            overflow-x: auto;
+            max-height: 55vh;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            font-size: 0.875rem;
+        }
+
+        thead {
+            position: sticky;
+            top: 0;
+            background: #f1f5f9;
+            z-index: 10;
+        }
+
+        th {
+            padding: 10px 12px;
+            color: var(--text-muted);
+            font-weight: 700;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            border-bottom: 2px solid #e2e8f0;
+        }
+
+        td {
+            padding: 10px 12px;
+            border-bottom: 1px solid #f1f5f9;
+            vertical-align: middle;
+        }
+
+        .status-options {
+            display: flex;
+            gap: 4px;
+            min-width: 150px;
+        }
+
+        .status-options label {
+            flex: 1;
+            text-align: center;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .status-options input[type="radio"] {
+            display: none;
+        }
+
+        .status-options span {
+            display: block;
+            padding: 6px 0;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            border: 1px solid #cbd5e1;
+            background: #ffffff;
+            color: var(--text-muted);
+            transition: all 0.15s;
+        }
+
+        .status-options input[value="H"]:checked + span { background: var(--hadir-bg); color: var(--hadir-text); border-color: var(--hadir-text); }
+        .status-options input[value="I"]:checked + span { background: var(--izin-bg); color: var(--izin-text); border-color: var(--izin-text); }
+        .status-options input[value="S"]:checked + span { background: var(--sakit-bg); color: var(--sakit-text); border-color: var(--sakit-text); }
+        .status-options input[value="A"]:checked + span { background: var(--alpha-bg); color: var(--alpha-text); border-color: var(--alpha-text); }
+
+        .note-input {
+            width: 100%;
+            min-width: 100px;
+            padding: 6px 8px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            outline: none;
+            background: var(--bg-light);
+        }
+
+        .note-input:focus {
+            background: #ffffff;
+            border-color: var(--secondary);
+        }
+
+        .footer-actions {
+            padding: 12px 16px;
+            background: #ffffff;
+            border-top: 1px solid #e2e8f0;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .btn-main {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 10px;
+            font-weight: 700;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+        }
+
+        .btn-save { background: #22c55e; color: white; }
+        .btn-save:active { background: #16a34a; }
+
+        .btn-export { background: var(--primary); color: white; }
+        .btn-export:active { background: var(--primary-dark); }
+
+        /* Media Queries Tampilan Tablet & Desktop */
+        @media (min-width: 640px) {
+            body { padding: 20px; }
+            header h1 { font-size: 1.5rem; }
+            header p { font-size: 0.95rem; }
+            
+            .top-row {
+                flex-direction: row;
+                justify-content: space-between;
+                align-items: center;
+            }
+            .date-box { width: auto; min-width: 320px; }
+            .search-box { flex: 1; }
+
+            .footer-actions {
+                flex-direction: row;
+            }
+            .btn-main {
+                flex: 1;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>PANITIA LDKS SMPN 2 KALIBARU</h1>
+        <p>Aplikasi Absensi Kehadiran Peserta (14–18 Oktober 2026)</p>
+    </header>
+
+    <div class="controls-card">
+        <div class="top-row">
+            <div class="date-box">
+                <label for="tglAbsen">Hari / Tanggal:</label>
+                <select id="tglAbsen">
+                    <option value="2026-10-14">Rabu, 14 Okt 2026</option>
+                    <option value="2026-10-15">Kamis, 15 Okt 2026</option>
+                    <option value="2026-10-16">Jumat, 16 Okt 2026</option>
+                    <option value="2026-10-17">Sabtu, 17 Okt 2026</option>
+                    <option value="2026-10-18">Minggu, 18 Okt 2026</option>
+                </select>
+            </div>
+            <div class="search-box">
+                <input type="text" id="searchInput" placeholder="Cari nama siswa..." onkeyup="filterSiswa()">
+            </div>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card stat-hadir">Hadir <div class="count" id="countH">0</div></div>
+            <div class="stat-card stat-izin">Izin <div class="count" id="countI">0</div></div>
+            <div class="stat-card stat-sakit">Sakit <div class="count" id="countS">0</div></div>
+            <div class="stat-card stat-alpha">Alpha <div class="count" id="countA">0</div></div>
+        </div>
+
+        <div class="quick-actions">
+            <button class="btn-action" onclick="setAll('H')">Semua Hadir</button>
+            <button class="btn-action" onclick="setAll('A')">Reset Alpha</button>
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table>
+            <thead>
+                <tr>
+                    <th style="width: 32px; text-align: center;">No</th>
+                    <th>Nama Siswa</th>
+                    <th style="width: 160px; text-align: center;">Status</th>
+                    <th style="width: 120px;">Keterangan</th>
+                </tr>
+            </thead>
+            <tbody id="siswaList"></tbody>
+        </table>
+    </div>
+
+    <div class="footer-actions">
+        <button class="btn-main btn-save" onclick="simpanAbsensi()">Simpan Kehadiran Hari Ini</button>
+        <button class="btn-main btn-export" onclick="exportCSV()">Unduh Rekapan Hari Ini (CSV)</button>
+    </div>
+</div>
+
+<script>
+const dataSiswa = [
+    "Wildania Zhivaut Qulubiah", "Aftiaru Amelia Putri", "Rafa Putra F.", "Irsat Hamdani", "Putri Damayanti",
+    "Mia Safitri", "Fachira Ainaya Naufalyn Putri Octanta", "Rully Cartika Dewi", "Wilda Zafriya Alfahira", "Syainul Arafadillah",
+    "Emiliya Ayu Damayanti", "Yofanda Putra Pradita", "Tanisya Fitri Cahyani", "Salsabila Nadifa Aqila Wardayanti", "Fajrina Fevey Prayitno",
+    "Khoerin Nisa Masrurah", "Elinoya Jatmika", "Diko Rendi Irwanto", "Aurelly Dini Septian Putri", "M. Ilham Adi Candra",
+    "Arjuna Satria Wijaksana", "Nur Afifah", "Kameliya Wulan Febriana", "Intan Balqis Umairah", "Lailatul Sofia",
+    "Fhailla Aryani Putri", "Nur Aurel Ningtyas", "M. Yuda Pratama", "Syifa Nauratus Z.", "Salsabila Wardayanti",
+    "Rani Fitria Wulandari", "Nafa Dwi Oktavia", "Daniyah Nur Hasanah", "Lailatus Syarifah Izzati", "Syaza Liaful Fitria",
+    "Nancy Mardhatillah", "Andita Risra Safitri", "Nurul Siti Khotimah", "Melicha Raysha Madu", "Fizi Alvaro",
+    "Moh. Fadlan Alfarizi", "Dimas Saputra", "Hafiz Alan Rabbani", "Langit Ramadan",
+    "M. Faiz Baidawi", "Farello Aufa", "M. Ardiansyah", "M. Rama", "Haikal Puji Hamdani",
+    "Khoirun Nizam Bachtiar", "Regan Arya Satya Prayoga", "Fairel Athariz Calief", "Reza Abdul Aziz Ahmad", "Aldrich Alex Wijanarko",
+    "M. Azza Ibrahim Mufit", "Ananda Fevia Nadzifa", "Arina Manafsrana", "Siti Khotiyah", "Adella Zahra",
+    "Anisa Rohmatul Janah", "Fatmawati Lailiya"
+];
+
+function loadSavedData() {
+    const tgl = document.getElementById('tglAbsen').value;
+    const saved = localStorage.getItem('ldks_absen_' + tgl);
+    return saved ? JSON.parse(saved) : null;
+}
+
+function renderTable() {
+    const tbody = document.getElementById('siswaList');
+    tbody.innerHTML = '';
+    const savedData = loadSavedData();
+
+    dataSiswa.forEach((nama, i) => {
+        const no = i + 1;
+        let status = 'H';
+        let ket = '';
+
+        if (savedData && savedData[i]) {
+            status = savedData[i].status;
+            ket = savedData[i].ket || '';
+        }
+
+        tbody.innerHTML += `
+            <tr class="siswa-row" data-nama="${nama.toLowerCase()}">
+                <td style="text-align: center; font-weight: 700; color: var(--text-muted); font-size: 0.8rem;">${no}</td>
+                <td style="font-weight: 600; font-size: 0.85rem;">${nama}</td>
+                <td>
+                    <div class="status-options">
+                        <label><input type="radio" name="st_${i}" value="H" ${status==='H'?'checked':''} onchange="updateStats()"><span>H</span></label>
+                        <label><input type="radio" name="st_${i}" value="I" ${status==='I'?'checked':''} onchange="updateStats()"><span>I</span></label>
+                        <label><input type="radio" name="st_${i}" value="S" ${status==='S'?'checked':''} onchange="updateStats()"><span>S</span></label>
+                        <label><input type="radio" name="st_${i}" value="A" ${status==='A'?'checked':''} onchange="updateStats()"><span>A</span></label>
+                    </div>
+                </td>
+                <td>
+                    <input type="text" class="note-input" id="ket_${i}" value="${ket}" placeholder="-">
+                </td>
+            </tr>
+        `;
+    });
+    updateStats();
+}
+
+function updateStats() {
+    let h = 0, iCount = 0, s = 0, a = 0;
+    dataSiswa.forEach((_, i) => {
+        const checked = document.querySelector(`input[name="st_${i}"]:checked`);
+        if (checked) {
+            const val = checked.value;
+            if (val === 'H') h++;
+            else if (val === 'I') iCount++;
+            else if (val === 'S') s++;
+            else if (val === 'A') a++;
+        }
+    });
+
+    document.getElementById('countH').innerText = h;
+    document.getElementById('countI').innerText = iCount;
+    document.getElementById('countS').innerText = s;
+    document.getElementById('countA').innerText = a;
+}
+
+function setAll(status) {
+    dataSiswa.forEach((_, i) => {
+        const radio = document.querySelector(`input[name="st_${i}"][value="${status}"]`);
+        if (radio) radio.checked = true;
+    });
+    updateStats();
+}
+
+function filterSiswa() {
+    const query = document.getElementById('searchInput').value.toLowerCase();
+    const rows = document.querySelectorAll('.siswa-row');
+    rows.forEach(row => {
+        const nama = row.getAttribute('data-nama');
+        row.style.display = nama.includes(query) ? '' : 'none';
+    });
+}
+
+function simpanAbsensi() {
+    const tglSelect = document.getElementById('tglAbsen');
+    const tgl = tglSelect.value;
+    const labelTgl = tglSelect.options[tglSelect.selectedIndex].text;
+    
+    let hasil = [];
+    dataSiswa.forEach((nama, i) => {
+        const status = document.querySelector(`input[name="st_${i}"]:checked`).value;
+        const ket = document.getElementById(`ket_${i}`).value;
+        hasil.push({ no: i + 1, nama, status, ket });
+    });
+    localStorage.setItem('ldks_absen_' + tgl, JSON.stringify(hasil));
+    alert('Absensi ' + labelTgl + ' berhasil disimpan!');
+}
+
+function exportCSV() {
+    const tglSelect = document.getElementById('tglAbsen');
+    const tgl = tglSelect.value;
+    const labelTgl = tglSelect.options[tglSelect.selectedIndex].text;
+
+    let csv = `\uFEFFNo,Nama Siswa,Hari / Tanggal,Status,Keterangan\n`;
+    dataSiswa.forEach((nama, i) => {
+        const status = document.querySelector(`input[name="st_${i}"]:checked`).value;
+        const ket = document.getElementById(`ket_${i}`).value.replace(/"/g, '""');
+        csv += `"${i + 1}","${nama}","${labelTgl}","${status}","${ket}"\n`;
+    });
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `Absensi_LDKS_${tgl}.csv`;
+    a.click();
+}
+
+document.getElementById('tglAbsen').addEventListener('change', renderTable);
+renderTable();
+</script>
+</body>
+</html>
